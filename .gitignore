@@ -2,10 +2,12 @@
 .DS_Store
 
 # Build output
+dist/
 build
 *.exe
 .vscode
 __pycache__/
+*.egg-info/
 
 # Python virtual environment
 .devenv/
