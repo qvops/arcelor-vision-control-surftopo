@@ -1,0 +1,17 @@
+# OS-specific files
+.DS_Store
+
+# Build output
+build
+*.exe
+.vscode
+__pycache__/
+
+# Python virtual environment
+.devenv/
+.venv/
+.env
+
+# Python testing
+.pytest_cache/
+.coverage
