@@ -15,7 +15,7 @@ class TimeProfiler:
         ```
     """
 
-    def __init__(self, name=None, cuda_sync=True, registry=None):
+    def __init__(self, name=None, cuda_sync=False, registry=None):
         self.name = name
         self.cuda_sync = cuda_sync
         self.registry = registry
