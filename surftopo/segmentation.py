@@ -376,10 +376,14 @@ def remove_top_bottom_margin(X: torch.Tensor, Y: torch.Tensor, Z: torch.Tensor, 
     Returns:
         tuple: A tuple containing the updated X, Y, and Z tensors.
     """
-    length = Y[:, 0]
-    limits = torch.tensor([Y[0, 0] + top_bottom_margin_removal_mm, Y[-1, 0] - top_bottom_margin_removal_mm], device=Y.device)
-    valid_row_idx = torch.searchsorted(length, limits)
-    valid_row_idx = torch.clamp(valid_row_idx, 0, length.size(0) - 1)
+    length = Y[:, 0].contiguous()
+    lower_limit = Y[0, 0] + top_bottom_margin_removal_mm
+    upper_limit = Y[-1, 0] - top_bottom_margin_removal_mm
+
+    lower_idx = torch.searchsorted(length, lower_limit, right=False)
+    upper_idx = torch.searchsorted(length, upper_limit, right=True)
+    valid_row_idx = torch.tensor([lower_idx, upper_idx], device=Y.device)
+
     X_valid, Y_valid, Z_valid = X[valid_row_idx[0]:valid_row_idx[1], :], Y[valid_row_idx[0]:valid_row_idx[1], :], Z[valid_row_idx[0]:valid_row_idx[1], :]
     return X_valid, Y_valid, Z_valid, valid_row_idx
 

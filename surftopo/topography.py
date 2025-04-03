@@ -52,9 +52,9 @@ def analyze_surface_topography(x: np.ndarray, y: np.ndarray, z: np.ndarray, opti
         x, y, z = x[::step, ::step], y[::step, ::step], z[::step, ::step]
     
     with TimeProfiler("gpu_transfer", registry=profilers):
-        X = torch.from_numpy(x).to(options.device)
-        Y = torch.from_numpy(y).to(options.device)
-        Z = torch.from_numpy(z).to(options.device)
+        X = torch.from_numpy(x).to(options.device, dtype=options.dtype)
+        Y = torch.from_numpy(y).to(options.device, dtype=options.dtype)
+        Z = torch.from_numpy(z).to(options.device, dtype=options.dtype)
 
     with TimeProfiler("edge_detection", registry=profilers):
         threshold = options.edge_detection_threshold_mm
@@ -154,7 +154,7 @@ def analyze_surface_topography(x: np.ndarray, y: np.ndarray, z: np.ndarray, opti
         profile_widths_x = surftopo.feature.calculate_profile_widths_x(X_valid)
         profile_center_deviations = surftopo.feature.calculate_profile_center_deviations(X_valid)
         profile_tilt = surftopo.feature.calculate_profile_tilt(Z_uni_fil, dx=resolution_mm)
-        profile_offset = surftopo.feature.calculate_profile_offset(Z_uni_fil, Zr=options.profile_offset_zr)
+        profile_offset = surftopo.feature.calculate_profile_offset(Z_uni_fil, Zr=options.profile_offset_zr_mm)
         fiber_flatness_i_units = surftopo.feature.calculate_flatness(Z_uni_fil, dy=resolution_mm)
         profile_widths_x, profile_center_deviations = surftopo.feature.interpolate_profile_feature(Y_valid, axis_profile, 
                                                                                                    profile_widths_x, profile_center_deviations)
@@ -183,15 +183,15 @@ def analyze_surface_topography(x: np.ndarray, y: np.ndarray, z: np.ndarray, opti
         Z_uni_fil_detrend = detrend_method(X_uni, Y_uni, Z_uni_fil)
 
     with TimeProfiler("amplitudes", registry=profilers):
-        prominence_threshold = options.prominence_threshold
-        amplitudes_wavelengths = surftopo.feature.calculate_amplitude_wavelength(Z_uni_fil_detrend, Y_uni, prominence_threshold)
+        prominence_threshold_mm = options.prominence_threshold_mm
+        amplitudes_wavelengths = surftopo.feature.calculate_amplitude_wavelength(Z_uni_fil_detrend, Y_uni, prominence_threshold_mm)
         result.update(amplitudes_wavelengths)
 
     if options.return_fiber_iso_amplitudes:
         with TimeProfiler("fiber_amplitudes_iso", registry=profilers):
             fiber_amplitudes = surftopo.feature.calculate_fiber_amplitudes(Z_uni_fil_detrend)
             result.update(fiber_amplitudes)
-    
+
     if options.return_surface_iso_amplitudes:
         with TimeProfiler("surface_amplitudes_iso", registry=profilers):
             surface_amplitudes = surftopo.feature.calculate_surface_amplitudes(Z_uni_fil_detrend)

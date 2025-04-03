@@ -145,7 +145,7 @@ def sort_by(x: torch.Tensor, y: torch.Tensor, z: torch.Tensor, order_by: torch.T
     torch.Tensor
         The sorted z tensor.
     """
-    order = torch.argsort(order_by, dim=dim)
+    order = torch.argsort(order_by, dim=dim, stable=True)
 
     if x is not None:
         x = torch.gather(x, dim=dim, index=order)

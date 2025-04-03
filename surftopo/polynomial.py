@@ -161,7 +161,7 @@ def calculate_polynomial_fit(n: int, x: torch.Tensor, z: torch.Tensor, device,
 
     batchA = A.unsqueeze(0).repeat(z.shape[0], 1, 1)
     if device != z.device:
-        batchA = batchA.to(device)
+        batchA = batchA.to(device=device)
         z = z.to(device)
 
     coefficients = torch.linalg.lstsq(batchA, z).solution

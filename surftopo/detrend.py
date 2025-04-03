@@ -43,7 +43,7 @@ def remove_plane(x: torch.Tensor, y: torch.Tensor, z: torch.Tensor, use_center=T
 
     return z_detrend
 
-def remove_fiber_mean(z: torch.Tensor):
+def remove_fiber_mean(x: torch.Tensor, y: torch.Tensor, z: torch.Tensor):
     """
     Remove the mean of a fiber from the z-coordinates.
 
@@ -63,6 +63,8 @@ def remove_fiber_median(z: torch.Tensor):
     Remove the mean of a fiber from the z-coordinates.
 
     Args:
+        x (torch.Tensor): The x-coordinates of the fiber.
+        y (torch.Tensor): The y-coordinates of the fiber.
         z (torch.Tensor): The z-coordinates of the surface.
 
     Returns:
@@ -80,12 +82,13 @@ def remove_fiber_linear_regression(x: torch.Tensor, y: torch.Tensor, z: torch.Te
     Args:
         x (torch.Tensor): The x-coordinates of the fiber.
         y (torch.Tensor): The y-coordinates of the fiber.
+        z (torch.Tensor): The z-coordinates of the surface.
 
     Returns:
         torch.Tensor: The detrended y-coordinates.
     """
     y = y[:, 0].squeeze()
-
+    
     assert y.ndim == 1
     assert y.shape[0] == z.shape[0]
 
@@ -103,7 +106,39 @@ def remove_fiber_linear_regression(x: torch.Tensor, y: torch.Tensor, z: torch.Te
 
     return z_detrend
 
+def remove_surface_mean(x: torch.Tensor, y: torch.Tensor, z: torch.Tensor):
+    """
+    Remove the mean of the surface from the z-coordinates.
+
+    Args:
+        x (torch.Tensor): The x-coordinates of the fiber.
+        y (torch.Tensor): The y-coordinates of the fiber.
+        z (torch.Tensor): The z-coordinates of the surface.
+
+    Returns:
+        torch.Tensor: The detrended z-coordinates.
+    """
+    mean = torch.mean(z)
+    z_detrend = z - mean
+
+    return z_detrend
+
+def null_detrend(x: torch.Tensor, y: torch.Tensor, z: torch.Tensor):
+    """
+    Return the z-coordinates without any detrending.
+    Args:
+        x (torch.Tensor): The x-coordinates of the fiber.
+        y (torch.Tensor): The y-coordinates of the fiber.
+        z (torch.Tensor): The z-coordinates of the surface.
+    Returns:
+        torch.Tensor: The z-coordinates.
+    """
+    return z
+
 detrends = {
     "Surface_plane": remove_plane,
     "Fiber_linear_regression": remove_fiber_linear_regression,
+    "Fiber_mean": remove_fiber_mean,
+    "Surface_mean": remove_surface_mean,
+    "None": null_detrend
 }

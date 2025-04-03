@@ -241,7 +241,7 @@ def calculate_fiber_amplitudes(z: torch.Tensor):
     - These calculations are performed for each column (fiber) independently.
     """
     n = z.shape[0]
-    r = surftopo.detrend.remove_fiber_mean(z)
+    r = z
 
     # Compute Ra (Arithmetic average of absolute values)
     Ra = torch.abs(r).sum(dim=0) / n
@@ -284,8 +284,8 @@ def calculate_surface_amplitudes(z: torch.Tensor):
     - Ssk: Skewness of the height distribution.
     - Sku: Kurtosis of the height distribution.
     """
-    mean = torch.mean(z)
-    centered_data = z - mean
+
+    centered_data = z
     abs_centered_data = torch.abs(centered_data)
     centered_data_sq = centered_data ** 2
 
@@ -362,7 +362,7 @@ def interpolate_profile_feature(Y_valid: torch.Tensor, axis_profile: torch.Tenso
         The interpolated features.
     """
     y_valid_mean = calculate_mean_axis(Y_valid, dim=1)
-    order = torch.argsort(y_valid_mean)
+    order = torch.argsort(y_valid_mean, stable=True)
     y_valid_mean_sorted = y_valid_mean[order]
 
     results = []
@@ -412,7 +412,7 @@ def calculate_polynomial_fit(degree: int, sub_sampling_step, resampled_x: torch.
     return results
 
 
-def calculate_amplitude_wavelength(z: torch.Tensor, y: torch.Tensor, prominence_threshold):
+def calculate_amplitude_wavelength(z: torch.Tensor, y: torch.Tensor, prominence_threshold_mm):
     """
     Calculate the amplitude and wavelength of the surface fibers.
 
@@ -430,7 +430,7 @@ def calculate_amplitude_wavelength(z: torch.Tensor, y: torch.Tensor, prominence_
         - fiber_amplitudes: The amplitude of each fiber (max valley depths).
         - fiber_wavelengths: The wavelength of each fiber (corresponding wavelengths).
     """
-    max_depths, wavelengths, _, _, _ = surftopo.extrema.calculate_max_fiber_valley_depth_and_wavelength(z, y, prominence_threshold)
+    max_depths, wavelengths, _, _, _ = surftopo.extrema.calculate_max_fiber_valley_depth_and_wavelength(z, y, prominence_threshold_mm)
 
     results = {}
     results["fiber_amplitudes"] = max_depths.squeeze()

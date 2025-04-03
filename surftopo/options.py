@@ -1,3 +1,4 @@
+import torch
 
 class Options:
     """
@@ -11,7 +12,10 @@ class Options:
         # Options for the analysis
 
         # The device to use for the analysis: cuda, cpu
-        self.device = "cpu"
+        self.device = "cuda"
+
+        # Data type to use for the analysis: torch.float32, torch.float64
+        self.dtype = torch.float32
 
         # Invalid value for the input data. It is equivalent to NaN or no data.
         self.invalid_value = 0
@@ -72,15 +76,18 @@ class Options:
         self.top_bottom_margin_removal_mm = 10
 
         # The method used for detrend: 
-        # Surface_plane: removes the plane from the data
+        # Surface_plane: removes the plane from the surface
+        # Surface_mean: removes the mean from the surface
         # Fiber_linear_regression: removes the linear regression from each fiber independently
+        # Fiber_mean: removes the mean of each fiber independently
+        # None: no detrending
         self.detrend = "Fiber_linear_regression"
 
         # Reference height offset for all profiles.
-        self.profile_offset_zr = 1642.1
+        self.profile_offset_zr_mm = 1000
 
         # Minimum prominence value for wavelength and depth analysis
-        self.prominence_threshold = 0.5
+        self.prominence_threshold_mm = 0.5
 
         ###########################################################################################
         # Options for the validation of intermediate results

@@ -15,10 +15,13 @@ class TimeProfiler:
         ```
     """
 
-    def __init__(self, name=None, cuda_sync=False, registry=None):
+    def __init__(self, name=None, cuda_sync=True, registry=None):
         self.name = name
         self.cuda_sync = cuda_sync
         self.registry = registry
+        if not torch.cuda.is_available():
+            self.cuda_sync = False
+
 
     def __enter__(self):
         self.start = self.time()

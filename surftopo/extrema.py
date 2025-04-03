@@ -87,7 +87,7 @@ def find_fiber_local_extrema_mask_not_repeated(z: torch.Tensor):
 
     return minima_mask, maxima_mask
 
-def find_fiber_local_extrema_mask_simple_prominence(z: torch.Tensor, prominence_threshold=0):
+def find_fiber_local_extrema_mask_simple_prominence(z: torch.Tensor, prominence_threshold_mm=0):
     """
     Find local minima and maxima mask per fiber considering prominence to avoid noise. Only keeps the first of any adjacent pairs of equal values
     Prominence is calculate as the min distance from adjacent extrema (classical definition of prominence)
@@ -157,8 +157,8 @@ def find_fiber_local_extrema_mask_simple_prominence(z: torch.Tensor, prominence_
     prominence = torch.gather(prominence, 0, index=reverse_order)
     prominence = torch.masked_fill(prominence, ~extrema_mask, -torch.inf)
 
-    maxima_mask = prominence > prominence_threshold
-    minima_mask = (prominence < -prominence_threshold) & (~torch.isinf(prominence))
+    maxima_mask = prominence > prominence_threshold_mm
+    minima_mask = (prominence < -prominence_threshold_mm) & (~torch.isinf(prominence))
 
     reverse_order_repeated = order_repeated.argsort(dim=0)
 
@@ -199,7 +199,7 @@ def torch_nanminmax(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
     # Compute element-wise minimum
     return torch.minimum(a_fixed, b_fixed), torch.maximum(a_fixed, b_fixed)
 
-def find_fiber_local_extrema_mask(z: torch.Tensor, prominence_threshold=0):
+def find_fiber_local_extrema_mask(z: torch.Tensor, prominence_threshold_mm=0):
     """
     Find local minima and maxima mask per fiber considering prominence to avoid noise. Only keeps the first of any adjacent pairs of equal values
     Prominence is calculate as the max distance from adjacent extrema that is the best approach for valley depth calculations
@@ -271,12 +271,12 @@ def find_fiber_local_extrema_mask(z: torch.Tensor, prominence_threshold=0):
     prominence_max = torch.gather(prominence_sort_max, 0, index=reverse_order)
     prominence_max = torch.masked_fill(prominence_max, ~extrema_mask, -torch.inf)
 
-    maxima_mask = prominence_max > prominence_threshold
+    maxima_mask = prominence_max > prominence_threshold_mm
 
     prominence_min = torch.gather(prominence_sort_min, 0, index=reverse_order)
     prominence_min = torch.masked_fill(prominence_min, ~extrema_mask, +torch.inf)
 
-    minima_mask = (prominence_min < -prominence_threshold) 
+    minima_mask = (prominence_min < -prominence_threshold_mm) 
 
     # Revert back to the original order
     reverse_order_repeated = order_not_repeated.argsort(dim=0)
@@ -397,7 +397,7 @@ def calculate_max_fiber_valley_depth_and_wavelength_loop(z: torch.Tensor, y: tor
 
     return max_depths, corresponding_wavelengths
 
-def calculate_max_fiber_valley_depth_and_wavelength(z: torch.Tensor, y: torch.Tensor, prominence_threshold=0, testing=False):
+def calculate_max_fiber_valley_depth_and_wavelength(z: torch.Tensor, y: torch.Tensor, prominence_threshold_mm=0, testing=False):
     """
     Calculate the max valley depth per fiber and its corresponding wavelength.
 
@@ -417,7 +417,7 @@ def calculate_max_fiber_valley_depth_and_wavelength(z: torch.Tensor, y: torch.Te
         - Indices of the previous maxima (1D tensor)
         - Indices of the next maxima (1D tensor)
     """
-    minima_mask, maxima_mask = find_fiber_local_extrema_mask(z, prominence_threshold)
+    minima_mask, maxima_mask = find_fiber_local_extrema_mask(z, prominence_threshold_mm)
 
     y_maxima = y.masked_fill(~maxima_mask, torch.inf)
     z_maxima = z.masked_fill(~maxima_mask, torch.inf)
@@ -461,13 +461,15 @@ def calculate_max_fiber_valley_depth_and_wavelength(z: torch.Tensor, y: torch.Te
     max_depth_values = max_depths.values
     max_depth_indices = max_depths.indices
     max_depth_values[torch.isinf(max_depth_values)] = 0
+    eps = torch.finfo(y.dtype).eps
+    corresponding_wavelengths[max_depth_values < eps] = 0
 
     if testing:
         return max_depth_values, corresponding_wavelengths, max_depth_indices, prev_maxima_ind_y, next_maxima_ind_y, z_inter
     
     return max_depth_values, corresponding_wavelengths, max_depth_indices, prev_maxima_ind_y, next_maxima_ind_y
 
-def calculate_max_fiber_valley_depth_and_wavelength_scipy(z: torch.Tensor, y: torch.Tensor, prominence_threshold = 0):
+def calculate_max_fiber_valley_depth_and_wavelength_scipy(z: torch.Tensor, y: torch.Tensor, prominence_threshold_mm = 0):
     """
     Calculates the maximum valley depth and corresponding wavelength for each fiber, using SciPy and vectorized operations to minimize inner loops.
     
@@ -477,7 +479,7 @@ def calculate_max_fiber_valley_depth_and_wavelength_scipy(z: torch.Tensor, y: to
         The input tensor where each column is a fiber.
     y : torch.Tensor
         The position tensor (same shape as z) representing spatial positions.
-    prominence_threshold : float, optional
+    prominence_threshold_mm : float, optional
         Prominence threshold for maximum detection (default 0).
 
     Returns
@@ -499,7 +501,7 @@ def calculate_max_fiber_valley_depth_and_wavelength_scipy(z: torch.Tensor, y: to
         z_fiber = z_np[:, col]
         y_fiber = y_np[:, col]
         
-        maxima, _ = scipy.signal.find_peaks(z_fiber, prominence=prominence_threshold)
+        maxima, _ = scipy.signal.find_peaks(z_fiber, prominence=prominence_threshold_mm)
         minima, _ = scipy.signal.find_peaks(-z_fiber)
         
         if len(maxima) < 2 or minima.size == 0:
